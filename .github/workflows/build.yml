@@ -1,62 +1,24 @@
 name: Build
-
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - 'master'
-  pull_request:
-    branches:
-      - '*'
-      - '*/*'
-      - '**'
-
+on: [push]
 jobs:
-  build-windows-release:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          clean: true
-          submodules: recursive
-          fetch-depth: 0
-
-      - name: Install CMake
-        uses: lukka/get-cmake@latest
-        with:
-          cmakeVersion: '3.23.2'
-
-      - name: Generate build files
-        run: |
-          mkdir build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Release .. -A Win32
-          cmake --build . --config Release
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: sampvoice-win-release
-          path: build/server/Release/sampvoice.dll
-
-  build-linux-release:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
-          clean: true
           submodules: recursive
-          fetch-depth: 0
-
+      - name: Install deps
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y cmake gcc-multilib g++-multilib
       - name: Build
         run: |
-          cd docker
-          chmod +x ./build.sh
-          chmod +x ./docker-entrypoint.sh
-          ./build.sh
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+          mkdir build && cd build
+          cmake .. -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32 -DCMAKE_BUILD_TYPE=Release
+          cmake --build . --config Release
+      - name: Upload
+        uses: actions/upload-artifact@v3
         with:
-          name: sampvoice-linux-release
-          path: docker/build/server/sampvoice.so
+          name: sampvoice-linux
+          path: build/**/*.so
