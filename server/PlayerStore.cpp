@@ -6,7 +6,7 @@
 	See more here https://github.com/AmyrAhmady/sampvoice
 
 	Copyright (c) Daniel (CyberMor) 2020 All rights reserved
-*/
+*/ 
 
 #include "PlayerStore.h"
 
