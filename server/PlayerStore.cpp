@@ -62,19 +62,8 @@ void PlayerStore::RemovePlayerFromStore(const uint16_t playerId)
 			stream->DetachSpeaker(playerId);
 
 		delete pPlayerInfo;
-		
 	}
 	PlayerStore::playerMutex[playerId].unlock();
-	IPlayerPool* playerPool = SampVoiceComponent::GetPlayers();
-	IPlayer* player = playerPool->get(playerId);
-	if (player)
-	{
-		auto it = PlayerStore::internalPlayerPool.find(player);
-		if (it != PlayerStore::internalPlayerPool.end())
-		{
-			PlayerStore::internalPlayerPool.erase(player);
-		}
-	}
 }
 
 void PlayerStore::ClearStore()
@@ -97,6 +86,44 @@ bool PlayerStore::IsPlayerHasPlugin(const uint16_t playerId) noexcept
 {
 	assert(playerId >= 0 && playerId < PLAYER_POOL_SIZE);
 
+	return PlayerStore::playerInfo[playerId].load(std::memory_order_relaxed);
+}
+
+PlayerInfo* PlayerStore::RequestPlayerWithSharedAccess(const uint16_t playerId) noexcept
+{
+	assert(playerId >= 0 && playerId < PLAYER_POOL_SIZE);
+
+	PlayerStore::playerMutex[playerId].lock_shared();
+
+	return PlayerStore::playerInfo[playerId].load(std::memory_order_acquire);
+}
+
+void PlayerStore::ReleasePlayerWithSharedAccess(const uint16_t playerId) noexcept
+{
+	assert(playerId >= 0 && playerId < PLAYER_POOL_SIZE);
+
+	PlayerStore::playerMutex[playerId].unlock_shared();
+}
+
+PlayerInfo* PlayerStore::RequestPlayerWithUniqueAccess(const uint16_t playerId) noexcept
+{
+	assert(playerId >= 0 && playerId < PLAYER_POOL_SIZE);
+
+	PlayerStore::playerMutex[playerId].lock();
+
+	return PlayerStore::playerInfo[playerId].load(std::memory_order_acquire);
+}
+
+void PlayerStore::ReleasePlayerWithUniqueAccess(const uint16_t playerId) noexcept
+{
+	assert(playerId >= 0 && playerId < PLAYER_POOL_SIZE);
+
+	PlayerStore::playerMutex[playerId].unlock();
+}
+
+std::array<std::shared_mutex, PLAYER_POOL_SIZE> PlayerStore::playerMutex;
+std::array<std::atomic<PlayerInfo*>, PLAYER_POOL_SIZE> PlayerStore::playerInfo{};
+FlatPtrHashSet<IPlayer> PlayerStore::internalPlayerPool;
 	return PlayerStore::playerInfo[playerId].load(std::memory_order_relaxed);
 }
 
