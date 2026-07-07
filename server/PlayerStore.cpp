@@ -62,9 +62,9 @@ void PlayerStore::RemovePlayerFromStore(const uint16_t playerId)
 			stream->DetachSpeaker(playerId);
 
 		delete pPlayerInfo;
-		PlayerStore::playerMutex[playerId].unlock();
+		
 	}
-
+	PlayerStore::playerMutex[playerId].unlock();
 	IPlayerPool* playerPool = SampVoiceComponent::GetPlayers();
 	IPlayer* player = playerPool->get(playerId);
 	if (player)
