@@ -35,6 +35,7 @@ void PlayerStore::AddPlayerToStore(const uint16_t playerId, const uint8_t versio
 	}
 
 	IPlayerPool* playerPool = SampVoiceComponent::GetPlayers();
+	if (playerPool == nullptr) return;
 	IPlayer* player = playerPool->get(playerId);
 	if (player)
 	{
@@ -74,8 +75,8 @@ void PlayerStore::ClearStore()
 
 bool PlayerStore::IsPlayerConnected(const uint16_t playerId) noexcept
 {
-	assert(SampVoiceComponent::instance != nullptr);
-	assert(SampVoiceComponent::GetPlayers() != nullptr);
+	if (SampVoiceComponent::instance == nullptr) return false;
+	if (SampVoiceComponent::GetPlayers() == nullptr) return false;
 
 	assert(playerId >= 0 && playerId < PLAYER_POOL_SIZE);
 
